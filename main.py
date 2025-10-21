@@ -20,7 +20,9 @@ CONFIG = {
     "IMAGE_DIR": "scans_for_test",
     "OUTPUT_DOCX_NAME": "diary.docx",
     "GPT_MODEL_URI": "gpt://{folder_id}/qwen3-235b-a22b-fp8/latest",
-    "OPENAI_BASE_URL": "https://llm.api.cloud.yandex.net/v1"
+    "OPENAI_BASE_URL": "https://llm.api.cloud.yandex.net/v1",
+    "DEBUG": os.getenv("DEBUG_MODE", "false").lower() in ('true', '1', 't', 'yes'),
+    "DEBUG_DIR": "debug_output"
 }
 
 # --- ПРОМПТ ДЛЯ LLM ---
@@ -78,6 +80,10 @@ def check_config():
         print("!!! ОШИБКА: Не найдены YC_API_KEY или YC_FOLDER_ID.")
         print("!!! Пожалуйста, создайте файл .env и заполните его по инструкции.")
         return False
+    if not os.path.isdir(CONFIG["IMAGE_DIR"]):
+        print(f"!!! ОШИБКА: Папка '{CONFIG['IMAGE_DIR']}' не найдена.")
+        print("!!! Пожалуйста, создайте ее и поместите туда файлы сканов.")
+        return False
     return True
 
 def natural_sort_key(s: str) -> list:
@@ -105,16 +111,16 @@ def get_raw_text_from_ocr(base64_content: str) -> str | None:
     }
 
     try:
-        response = requests.post(url, headers=headers, json=body, timeout=120)
-        if response.status_code == 200:
-            result = response.json()
-            full_text = result.get('result', {}).get('textAnnotation', {}).get('fullText', '')
-            return full_text
-        else:
-            print(f"  [Ошибка OCR] Сервер вернул код: {response.status_code}. Ответ: {response.text}")
-            return None
+        response = requests.post(url, headers=headers, json=body, timeout=180)
+        response.raise_for_status()
+        result = response.json()
+        full_text = result.get('result', {}).get('textAnnotation', {}).get('fullText', '')
+        return full_text
+    except requests.exceptions.HTTPError as e:
+        print(f"  [Ошибка OCR] HTTP-ошибка: {e.response.status_code}. Ответ: {e.response.text}")
+        return None
     except requests.exceptions.RequestException as e:
-        print(f"  [Ошибка OCR] Не удалось подключиться к серверу: {e}")
+        print(f"  [Ошибка OCR] Не удалось подключиться к серверу OCR: {e}")
         return None
 
 def format_text_with_gpt(raw_text: str) -> str | None:
@@ -132,15 +138,15 @@ def format_text_with_gpt(raw_text: str) -> str | None:
 
         model_uri = CONFIG["GPT_MODEL_URI"].format(folder_id=CONFIG["FOLDER_ID"])
         print(f"    - Отправка запроса к модели: {model_uri}")
-
+        
         response = client.chat.completions.create(
             model=model_uri,
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": raw_text}
             ],
-            temperature=0.1,
-            max_tokens=8000, # Qwen3 имеет большое окно, можно увеличить
+            temperature=0.0,
+            max_tokens=8000,
             stream=False
         )
         
@@ -148,16 +154,17 @@ def format_text_with_gpt(raw_text: str) -> str | None:
         return formatted_text
 
     except openai.APIError as e:
-        print(f"  [Ошибка GPT/OpenAI API] Сервер вернул ошибку: {e}")
+        print(f"  [Ошибка GPT/API] Сервер вернул ошибку: {e.__class__.__name__} - {e}")
         return None
     except Exception as e:
-        print(f"  [Ошибка GPT/Клиент] Произошла непредвиденная ошибка: {e}")
+        print(f"  [Ошибка GPT/Клиент] Произошла непредвиденная ошибка: {e.__class__.__name__} - {e}")
         return None
 
 def add_markdown_to_document(doc: Document, markdown_text: str):
     """Парсит Markdown и добавляет форматированный текст в Word документ."""
     for line in markdown_text.split('\n'):
-        if not line.strip():
+        line_stripped = line.strip()
+        if not line_stripped:
             doc.add_paragraph()
             continue
         
@@ -174,28 +181,35 @@ def add_markdown_to_document(doc: Document, markdown_text: str):
 def main():
     if not check_config():
         return
+    
+    if CONFIG["DEBUG"]:
+        os.makedirs(CONFIG["DEBUG_DIR"], exist_ok=True)
+        print("-" * 40)
+        print(f"*** РЕЖИМ ОТЛАДКИ ВКЛЮЧЕН. Сырые OCR тексты будут сохранены в папку '{CONFIG['DEBUG_DIR']}'. ***")
+        print("-" * 40)
 
-    try:
-        image_files = [f for f in os.listdir(CONFIG["IMAGE_DIR"]) if f.lower().endswith('.jpg')]
-        image_files.sort(key=natural_sort_key)
-    except FileNotFoundError:
-        print(f"!!! ОШИБКА: Папка '{CONFIG['IMAGE_DIR']}' не найдена. Создайте ее и положите туда файлы.")
-        return
+    image_files = [f for f in os.listdir(CONFIG["IMAGE_DIR"]) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    image_files.sort(key=natural_sort_key)
         
     if not image_files:
-        print(f"!!! ОШИБКА: В папке '{CONFIG['IMAGE_DIR']}' не найдено jpg файлов.")
+        print(f"!!! ОШИБКА: В папке '{CONFIG['IMAGE_DIR']}' не найдено файлов изображений (jpg, jpeg, png).")
         return
 
     print(f"Найдено {len(image_files)} страниц. Начинаю обработку...")
-    print(f"Модель для форматирования: {CONFIG['GPT_MODEL_URI'].format(folder_id='...')}")
+    model_display_name = CONFIG['GPT_MODEL_URI'].split('/')[-2]
+    print(f"Модель для форматирования: {model_display_name}")
 
     doc = Document()
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'Times New Roman'
+    font.size = Pt(12)
 
     total_files = len(image_files)
     start_time = time.time()
 
     for i, filename in enumerate(image_files, 1):
-        page_number_match = re.search(r'(\d+)', filename)
+        page_number_match = re.search(r'(\d+)', os.path.splitext(filename)[0])
         page_label = page_number_match.group(1) if page_number_match else filename
 
         print(f"\n[{i}/{total_files}] Обработка страницы: {filename}")
@@ -205,40 +219,52 @@ def main():
         print("  -> Шаг 1: Распознавание рукописного текста (OCR)...")
         base64_content = encode_image_to_base64(filepath)
         raw_text = get_raw_text_from_ocr(base64_content)
+
+        if CONFIG["DEBUG"] and raw_text and raw_text.strip():
+            debug_filename = f"raw_{page_label}.txt"
+            debug_filepath = os.path.join(CONFIG["DEBUG_DIR"], debug_filename)
+            try:
+                with open(debug_filepath, 'w', encoding='utf-8') as f:
+                    f.write(raw_text)
+                print(f"    - [DEBUG] Сырой текст сохранен в: {debug_filepath}")
+            except IOError as e:
+                print(f"    - [DEBUG ОШИБКА] Не удалось сохранить сырой текст: {e}")
         
         if not raw_text or not raw_text.strip():
             print("  [Предупреждение] Текст на странице не найден или пуст.")
-            doc.add_paragraph("[На этой странице текст не найден]", style='Intense Quote')
+            p = doc.add_paragraph()
+            p.add_run("[На этой странице текст не найден]").italic = True
             if i < total_files: doc.add_page_break()
             continue
-        
-        print(f"    [DEBUG]   Сырой текст:\n{raw_text}")
 
-        print(f"  -> Шаг 2: Форматирование текста ({len(raw_text)} симв.)...")
+        print(f"  -> Шаг 2: Реставрация и форматирование текста ({len(raw_text)} симв.)...")
         formatted_text = format_text_with_gpt(raw_text)
-
-        print(f"    [DEBUG]   Отформатированный текст:\n{formatted_text}")
 
         if formatted_text:
             print("  -> Шаг 3: Добавление в Word документ...")
             add_markdown_to_document(doc, formatted_text)
         else:
-            print("  [Предупреждение] Не удалось отформатировать текст. Вставляю сырой результат OCR.")
-            doc.add_paragraph(raw_text)
+            print("  [ПРЕДУПРЕЖДЕНИЕ] Не удалось отформатировать текст. Вставляю сырой результат OCR.")
+            doc.add_heading("Сырой текст с OCR (форматирование не удалось)", level=3)
+            p = doc.add_paragraph()
+            p.add_run(raw_text).italic = True
         
         if i < total_files:
             doc.add_page_break()
 
     print("-" * 40)
     print("💾 Сохранение итогового файла...")
-    doc.save(CONFIG["OUTPUT_DOCX_NAME"])
-    
-    end_time = time.time()
-    total_time = end_time - start_time
-    print("-" * 40)
-    print("🎉 Обработка завершена!")
-    print(f"Итоговый файл сохранен как: {CONFIG['OUTPUT_DOCX_NAME']}")
-    print(f"Затраченное время: {total_time:.2f} секунд ({total_time/60:.2f} минут).")
+    try:
+        doc.save(CONFIG["OUTPUT_DOCX_NAME"])
+        end_time = time.time()
+        total_time = end_time - start_time
+        print("-" * 40)
+        print("🎉 Обработка завершена!")
+        print(f"Итоговый файл сохранен как: {CONFIG['OUTPUT_DOCX_NAME']}")
+        print(f"Затраченное время: {total_time:.2f} секунд ({total_time/60:.2f} минут).")
+    except Exception as e:
+        print(f"!!! ОШИБКА при сохранении файла: {e}")
+        print(f"!!! Возможно, файл {CONFIG['OUTPUT_DOCX_NAME']} открыт в другой программе. Закройте его и попробуйте снова.")
 
 
 if __name__ == '__main__':
