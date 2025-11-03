@@ -1,5 +1,6 @@
 import logging
 import sys
+import config
 
 def setup_logging():
     """Настраивает логирование в файл и консоль."""
@@ -15,5 +16,3 @@ def setup_logging():
         ]
     )
     logging.info("Логирование настроено.")
-
-from .. import config

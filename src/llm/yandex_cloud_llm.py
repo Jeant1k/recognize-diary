@@ -2,7 +2,7 @@ import logging
 from .base_llm import BaseLLM
 from yandex_cloud_ml_sdk import YCloudML
 from yandex_cloud_ml_sdk.auth import APIKeyAuth
-from .. import config
+import config
 
 class YandexCloudLLM(BaseLLM):
     """Реализация для работы с LLM из Yandex Cloud."""

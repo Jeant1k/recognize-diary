@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from .base_ocr import BaseOCR
-from .. import config
+import config
 
 class RehandMockOCR(BaseOCR):
     """Мок-реализация для rehand.ru, читающая текст из файла."""

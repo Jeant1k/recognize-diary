@@ -3,7 +3,7 @@ import json
 import logging
 import requests
 from .base_ocr import BaseOCR
-from .. import config
+import config
 
 class YandexVisionOCR(BaseOCR):
     """Реализация OCR через Yandex Vision API."""
@@ -68,7 +68,7 @@ class YandexVisionOCR(BaseOCR):
             body = {
                 "mimeType": "JPEG",
                 "languageCodes": ["ru", "en", "de"],
-                "model": "handwritten-ocr",
+                "model": "handwritten",
                 "content": encoded_image
             }
 

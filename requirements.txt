@@ -4,3 +4,4 @@ requests
 python-docx
 Pillow
 markdown
+dotenv
