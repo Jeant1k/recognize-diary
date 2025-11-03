@@ -1,0 +1,6 @@
+python-dotenv
+yandex-cloud-ml-sdk
+requests
+python-docx
+Pillow
+markdown

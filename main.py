@@ -1,271 +1,164 @@
-import os
-import re
-import base64
-import requests
-import time
-from docx import Document
-from docx.shared import Pt, Inches
-from dotenv import load_dotenv
-import openai
+import argparse
+import logging
+import itertools
+from pathlib import Path
 
-# --- КОНФИГУРАЦИЯ ---
+import config
+from src.utils.logging_setup import setup_logging
+from src.ocr.yandex_vision_ocr import YandexVisionOCR
+from src.ocr.rehand_mock_ocr import RehandMockOCR
+from src.llm.yandex_cloud_llm import YandexCloudLLM
+from src.document_generator.word import create_word_document
 
-# Загружаем переменные окружения из .env файла
-load_dotenv()
 
-# Получаем конфигурацию из переменных окружения
-CONFIG = {
-    "API_KEY": os.getenv("YC_API_KEY"),
-    "FOLDER_ID": os.getenv("YC_FOLDER_ID"),
-    "IMAGE_DIR": "scans_for_test",
-    "OUTPUT_DOCX_NAME": "diary.docx",
-    "GPT_MODEL_URI": "gpt://{folder_id}/qwen3-235b-a22b-fp8/latest",
-    "OPENAI_BASE_URL": "https://llm.api.cloud.yandex.net/v1",
-    "DEBUG": os.getenv("DEBUG_MODE", "false").lower() in ('true', '1', 't', 'yes'),
-    "DEBUG_DIR": "debug_output"
-}
-
-# --- ПРОМПТ ДЛЯ LLM ---
-# Это самый важный компонент для сохранения аутентичности текста
-SYSTEM_PROMPT = """
-Ты — опытный ассистент-реставратор. Твоя задача — обработать сырой текст, полученный после автоматического распознавания (OCR) рукописного советского дневника. Текст имеет огромную ценность. Твоя работа требует предельной аккуратности и понимания контекста.
-
-**Главная цель:** Максимально точно восстановить исходный авторский текст, исправляя только и исключительно артефакты и ошибки OCR, и отформатировать его в Markdown.
-
-**Автор дневника — женщина.** Это важно для правильного выбора окончаний глаголов в прошедшем времени (например, "я ходила", а не "я ходил"), если OCR не распознал их корректно.
-
-**Иерархия правил:**
-
-**Уровень 1: Категорически Запрещено (Сохранение Авторского Стиля):**
-1.  **Не перефразируй и не "улучшай" текст.** Сохраняй все авторские формулировки, порядок слов и стиль "потока сознания". Если написано "пошли мы гуляти", оставляй "пошли мы гуляти".
-2.  **Не исправляй грамматику и орфографию автора.** Устаревшие нормы, диалектизмы, авторские сокращения или ошибки — это часть исторической ценности. Не трогай их.
-3.  **Не додумывай смысл.** Если часть текста нечитаема или отсутствует, не пытайся её восстановить по смыслу. Оставляй как есть (например, "пр#шлось" или "непонятное слово").
-
-**Уровень 2: Разрешенная Реставрация (Исправление Ошибок OCR):**
-Это единственные изменения, которые ты можешь и должен вносить.
-1.  **Соединяй разорванные слова:** OCR часто рвет слова на части (например, "сло во", "пере живание"). Аккуратно соединяй их в "слово", "переживание".
-2.  **Исправляй очевидные опечатки OCR:** Если из контекста на 99% ясно, что OCR допустил ошибку, исправь её.
-    *   Пример: "уднать правду" → "узнать правду".
-    *   Пример: "в 80% меня попросили" → "в 80-х меня попросили".
-3.  **Восстанавливай обрезанные слова:** OCR может не распознать конец слова из-за переноса строки.
-    *   Пример: "перед подписанием союзного договоро-" → "перед подписанием союзного договора".
-4.  **Учитывай пол автора:** Если глагол в прошедшем времени распознан неоднозначно (например, "я подвергался"), используй женский род ("я подвергалась").
-
-**Уровень 3: Структурирование и Форматирование:**
-1.  **Абзацы:** Группируй предложения в логические абзацы, как это принято в дневниках. Не создавай новый абзац для каждого предложения. Старайся следовать оригинальной структуре, если она угадывается.
-2.  **Даты и подписи:** Даты (например, "21 июня 91 г.") — это часть текста, обычно в конце или начале записи. **Не делай их заголовками!** Оставляй их как обычный текст в конце или начале абзаца отдельной строкой.
-3.  **Заголовки:** Используй заголовки Markdown (`##`) только для очень явных названий глав или разделов, если они есть. В 99% случаев в дневнике их не будет.
-4.  **Цитаты:** Иностранные цитаты или выделенные фразы оформляй как цитаты Markdown (`> `).
-5.  **Вывод — только Markdown.** Никаких комментариев от тебя.
-
----
-**Пример выполнения задачи:**
-
-**Входной сырой текст:**
-"Надо было уднать правду. Прошло не так уж много времени с тех пор, и вот сейчас, в предрыноч- ные времена, когда столько идеалов поломалось в нас, я с ужасом вспоминаю мое искреннее негодование и отчаяние. И мы веруем! Мы привыкли веровать! я не о том, что подвергаю сомнению новые ценности. я о том, что я снова подвергался. 21июня91 г."
-
-**Твой идеальный результат (вывод в Markdown):**
-Прошло не так уж много времени с тех пор, и вот сейчас, в "предрыночные" времена, когда столько идеалов поломалось в нас, я с ужасом вспоминаю мое искреннее негодование и отчаяние. И мы веруем! Мы привыкли веровать!
-
-Я не о том, что подвергаю сомнению новые ценности. Я о том, что я снова подвергалась.
-
-Надо было узнать правду.
-
-21 июня 91 г.
-"""
-
-def check_config():
-    """Проверяет наличие необходимых ключей в конфигурации."""
-    if not CONFIG["API_KEY"] or not CONFIG["FOLDER_ID"]:
-        print("!!! ОШИБКА: Не найдены YC_API_KEY или YC_FOLDER_ID.")
-        print("!!! Пожалуйста, создайте файл .env и заполните его по инструкции.")
-        return False
-    if not os.path.isdir(CONFIG["IMAGE_DIR"]):
-        print(f"!!! ОШИБКА: Папка '{CONFIG['IMAGE_DIR']}' не найдена.")
-        print("!!! Пожалуйста, создайте ее и поместите туда файлы сканов.")
-        return False
-    return True
-
-def natural_sort_key(s: str) -> list:
-    """Ключ для "естественной" сортировки строк типа '10.jpg' > '2.jpg'."""
-    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
-
-def encode_image_to_base64(filepath: str) -> str:
-    """Кодирует файл изображения в строку Base64."""
-    with open(filepath, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
-
-def get_raw_text_from_ocr(base64_content: str) -> str | None:
-    """Отправляет изображение в Yandex Vision OCR и возвращает сырой текст."""
-    url = "https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Api-Key {CONFIG['API_KEY']}",
-        "x-folder-id": CONFIG["FOLDER_ID"],
-    }
-    body = {
-        "mimeType": "JPEG",
-        "languageCodes": ["ru", "en", "de"],
-        "model": "handwritten",
-        "content": base64_content
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=body, timeout=180)
-        response.raise_for_status()
-        result = response.json()
-        full_text = result.get('result', {}).get('textAnnotation', {}).get('fullText', '')
-        return full_text
-    except requests.exceptions.HTTPError as e:
-        print(f"  [Ошибка OCR] HTTP-ошибка: {e.response.status_code}. Ответ: {e.response.text}")
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f"  [Ошибка OCR] Не удалось подключиться к серверу OCR: {e}")
-        return None
-
-def format_text_with_gpt(raw_text: str) -> str | None:
-    """
-    Отправляет сырой текст в LLM через OpenAI-совместимый API Yandex.Cloud
-    для форматирования.
-    """
-    print(f"    - Инициализация клиента OpenAI для эндпоинта Yandex.Cloud...")
-    try:
-        client = openai.OpenAI(
-            api_key=CONFIG["API_KEY"],
-            base_url=CONFIG["OPENAI_BASE_URL"],
-            project=CONFIG["FOLDER_ID"]
-        )
-
-        model_uri = CONFIG["GPT_MODEL_URI"].format(folder_id=CONFIG["FOLDER_ID"])
-        print(f"    - Отправка запроса к модели: {model_uri}")
-        
-        response = client.chat.completions.create(
-            model=model_uri,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": raw_text}
-            ],
-            temperature=0.0,
-            max_tokens=8000,
-            stream=False
-        )
-        
-        formatted_text = response.choices[0].message.content
-        return formatted_text
-
-    except openai.APIError as e:
-        print(f"  [Ошибка GPT/API] Сервер вернул ошибку: {e.__class__.__name__} - {e}")
-        return None
-    except Exception as e:
-        print(f"  [Ошибка GPT/Клиент] Произошла непредвиденная ошибка: {e.__class__.__name__} - {e}")
-        return None
-
-def add_markdown_to_document(doc: Document, markdown_text: str):
-    """Парсит Markdown и добавляет форматированный текст в Word документ."""
-    for line in markdown_text.split('\n'):
-        line_stripped = line.strip()
-        if not line_stripped:
-            doc.add_paragraph()
-            continue
-        
-        if line.startswith('## '):
-            doc.add_heading(line.lstrip('## ').strip(), level=2)
-        elif line.startswith('# '):
-            doc.add_heading(line.lstrip('# ').strip(), level=1)
-        elif line.startswith('> '):
-            p = doc.add_paragraph(style='Intense Quote')
-            p.add_run(line.lstrip('> ').strip())
-        else:
-            doc.add_paragraph(line)
-
-def main():
-    if not check_config():
-        return
+def get_ocr_processor(tool_name: str):
+    """Фабрика для создания OCR процессоров."""
+    tool_config = config.OCR_TOOLS.get(tool_name)
+    if not tool_config:
+        raise ValueError(f"Неизвестный инструмент OCR: {tool_name}")
     
-    if CONFIG["DEBUG"]:
-        os.makedirs(CONFIG["DEBUG_DIR"], exist_ok=True)
-        print("-" * 40)
-        print(f"*** РЕЖИМ ОТЛАДКИ ВКЛЮЧЕН. Сырые OCR тексты будут сохранены в папку '{CONFIG['DEBUG_DIR']}'. ***")
-        print("-" * 40)
+    if tool_config["type"] == "yandex":
+        return YandexVisionOCR(processing_method=tool_config["method"])
+    if tool_config["type"] == "rehand_mock":
+        return RehandMockOCR()
+    
+    raise NotImplementedError(f"Тип OCR процессора не реализован: {tool_config['type']}")
 
-    image_files = [f for f in os.listdir(CONFIG["IMAGE_DIR"]) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    image_files.sort(key=natural_sort_key)
-        
-    if not image_files:
-        print(f"!!! ОШИБКА: В папке '{CONFIG['IMAGE_DIR']}' не найдено файлов изображений (jpg, jpeg, png).")
+def run_test_mode():
+    """Запускает перебор всех комбинаций OCR, LLM и промптов на тестовых данных."""
+    logging.info("--- Запуск в тестовом режиме ---")
+    
+    test_scans = sorted(list(config.TEST_SCANS_DIR.glob('*.jpg')), key=lambda p: int(p.stem))
+    if not test_scans:
+        logging.warning("Тестовые сканы не найдены. Проверьте директорию data/test_scans/")
         return
 
-    print(f"Найдено {len(image_files)} страниц. Начинаю обработку...")
-    model_display_name = CONFIG['GPT_MODEL_URI'].split('/')[-2]
-    print(f"Модель для форматирования: {model_display_name}")
-
-    doc = Document()
-    style = doc.styles['Normal']
-    font = style.font
-    font.name = 'Times New Roman'
-    font.size = Pt(12)
-
-    total_files = len(image_files)
-    start_time = time.time()
-
-    for i, filename in enumerate(image_files, 1):
-        page_number_match = re.search(r'(\d+)', os.path.splitext(filename)[0])
-        page_label = page_number_match.group(1) if page_number_match else filename
-
-        print(f"\n[{i}/{total_files}] Обработка страницы: {filename}")
-        doc.add_heading(f'Страница {page_label}', level=1)
-        filepath = os.path.join(CONFIG["IMAGE_DIR"], filename)
+    config.TEST_OUTPUTS_DIR.mkdir(exist_ok=True)
+    
+    # Создаем все комбинации для перебора
+    combinations = list(itertools.product(
+        config.OCR_TOOLS.keys(),
+        config.LLM_MODELS.keys(),
+        config.PROMPTS.keys()
+    ))
+    
+    logging.info(f"Всего сканов для теста: {len(test_scans)}")
+    logging.info(f"Всего комбинаций для проверки: {len(combinations)}")
+    
+    for image_path in test_scans:
+        page_num = image_path.stem
+        logging.info(f"--- Обработка страницы {page_num} ---")
         
-        print("  -> Шаг 1: Распознавание рукописного текста (OCR)...")
-        base64_content = encode_image_to_base64(filepath)
-        raw_text = get_raw_text_from_ocr(base64_content)
+        # Для чистоты эксперимента, если rehand есть в комбинациях,
+        # проверим наличие мок-файла заранее
+        rehand_text_path = config.REHAND_MOCK_TEXTS_DIR / f"{page_num}.txt"
+        if "rehand_mock" in config.OCR_TOOLS and not rehand_text_path.exists():
+             logging.warning(f"Мок-файл {rehand_text_path} не найден, комбинации с rehand_mock будут пропущены для этой страницы.")
+             
+        for ocr_name, llm_name, prompt_name in combinations:
+            
+            if ocr_name == "rehand_mock" and not rehand_text_path.exists():
+                continue
 
-        if CONFIG["DEBUG"] and raw_text and raw_text.strip():
-            debug_filename = f"raw_{page_label}.txt"
-            debug_filepath = os.path.join(CONFIG["DEBUG_DIR"], debug_filename)
+            current_combination = f"OCR: {ocr_name}, LLM: {llm_name}, Prompt: {prompt_name}"
+            logging.info(f"Тестирование комбинации: {current_combination}")
+            
             try:
-                with open(debug_filepath, 'w', encoding='utf-8') as f:
-                    f.write(raw_text)
-                print(f"    - [DEBUG] Сырой текст сохранен в: {debug_filepath}")
-            except IOError as e:
-                print(f"    - [DEBUG ОШИБКА] Не удалось сохранить сырой текст: {e}")
+                # 1. Распознавание текста (OCR)
+                ocr_processor = get_ocr_processor(ocr_name)
+                raw_text = ocr_processor.recognize(str(image_path))
+                if not raw_text or raw_text.startswith("[ОШИБКА"):
+                    logging.error(f"Не удалось распознать текст для {page_num}. Пропуск комбинации.")
+                    continue
+
+                # 2. Коррекция и форматирование (LLM)
+                llm_processor = YandexCloudLLM(model_uri=config.LLM_MODELS[llm_name])
+                prompt_template = config.PROMPTS[prompt_name]
+                formatted_text = llm_processor.correct_and_format(raw_text, prompt_template)
+                
+                # 3. Сохранение результата
+                output_filename = f"page_{page_num}__{ocr_name}__{llm_name}__{prompt_name}.md"
+                output_path = config.TEST_OUTPUTS_DIR / output_filename
+                
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    f.write(f"# Результат для страницы {page_num}\n")
+                    f.write(f"# Комбинация: {current_combination}\n\n")
+                    f.write("--- СЫРОЙ ТЕКСТ OCR ---\n")
+                    f.write(raw_text + "\n\n")
+                    f.write("--- ОБРАБОТАННЫЙ ТЕКСТ LLM ---\n")
+                    f.write(formatted_text)
+                
+                logging.info(f"Результат сохранен в {output_path}")
+
+            except Exception as e:
+                logging.error(f"Критическая ошибка при обработке комбинации {current_combination} для файла {image_path}: {e}", exc_info=True)
+
+
+def run_production_mode():
+    """Запускает обработку всех сканов с заранее выбранной лучшей конфигурацией."""
+    logging.info("--- Запуск в рабочем режиме ---")
+    
+    prod_scans = sorted(list(config.PRODUCTION_SCANS_DIR.glob('*.jpg')), key=lambda p: int(p.stem))
+    if not prod_scans:
+        logging.error("Рабочие сканы не найдены! Проверьте директорию data/production_scans/")
+        return
         
-        if not raw_text or not raw_text.strip():
-            print("  [Предупреждение] Текст на странице не найден или пуст.")
-            p = doc.add_paragraph()
-            p.add_run("[На этой странице текст не найден]").italic = True
-            if i < total_files: doc.add_page_break()
-            continue
+    logging.info(f"Найдено {len(prod_scans)} страниц для обработки.")
+    logging.info(f"Используемая конфигурация: OCR={config.PRODUCTION_OCR_TOOL}, LLM={config.PRODUCTION_LLM_MODEL}, Prompt={config.PRODUCTION_PROMPT}")
 
-        print(f"  -> Шаг 2: Реставрация и форматирование текста ({len(raw_text)} симв.)...")
-        formatted_text = format_text_with_gpt(raw_text)
-
-        if formatted_text:
-            print("  -> Шаг 3: Добавление в Word документ...")
-            add_markdown_to_document(doc, formatted_text)
-        else:
-            print("  [ПРЕДУПРЕЖДЕНИЕ] Не удалось отформатировать текст. Вставляю сырой результат OCR.")
-            doc.add_heading("Сырой текст с OCR (форматирование не удалось)", level=3)
-            p = doc.add_paragraph()
-            p.add_run(raw_text).italic = True
-        
-        if i < total_files:
-            doc.add_page_break()
-
-    print("-" * 40)
-    print("💾 Сохранение итогового файла...")
+    # Инициализируем процессоры один раз
     try:
-        doc.save(CONFIG["OUTPUT_DOCX_NAME"])
-        end_time = time.time()
-        total_time = end_time - start_time
-        print("-" * 40)
-        print("🎉 Обработка завершена!")
-        print(f"Итоговый файл сохранен как: {CONFIG['OUTPUT_DOCX_NAME']}")
-        print(f"Затраченное время: {total_time:.2f} секунд ({total_time/60:.2f} минут).")
-    except Exception as e:
-        print(f"!!! ОШИБКА при сохранении файла: {e}")
-        print(f"!!! Возможно, файл {CONFIG['OUTPUT_DOCX_NAME']} открыт в другой программе. Закройте его и попробуйте снова.")
+        ocr_processor = get_ocr_processor(config.PRODUCTION_OCR_TOOL)
+        llm_processor = YandexCloudLLM(model_uri=config.LLM_MODELS[config.PRODUCTION_LLM_MODEL])
+        prompt_template = config.PROMPTS[config.PRODUCTION_PROMPT]
+    except (ValueError, NotImplementedError) as e:
+        logging.critical(f"Ошибка инициализации процессоров: {e}")
+        return
+
+    all_pages_markdown = []
+    
+    for i, image_path in enumerate(prod_scans):
+        page_num = image_path.stem
+        logging.info(f"Обработка страницы {i+1}/{len(prod_scans)} (файл: {image_path.name})...")
+        
+        try:
+            raw_text = ocr_processor.recognize(str(image_path))
+            if not raw_text or raw_text.startswith("[ОШИБКА"):
+                logging.error(f"Не удалось распознать текст для {page_num}. Страница будет пропущена.")
+                all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_num}]")
+                continue
+
+            formatted_text = llm_processor.correct_and_format(raw_text, prompt_template)
+            all_pages_markdown.append(formatted_text)
+            
+        except Exception as e:
+            logging.error(f"Критическая ошибка при обработке файла {image_path}: {e}", exc_info=True)
+            all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_num} из-за внутренней ошибки]")
+
+    # Собираем все в один Word файл
+    output_docx_path = config.PRODUCTION_OUTPUT_DIR / "diary.docx"
+    create_word_document(all_pages_markdown, output_docx_path)
+    
+    logging.info("--- Работа завершена ---")
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    # Настройка парсера аргументов командной строки
+    parser = argparse.ArgumentParser(description="Оцифровка рукописного дневника.")
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["test", "production"],
+        default="test",
+        help="Режим работы: 'test' для перебора комбинаций, 'production' для финальной сборки."
+    )
+    args = parser.parse_args()
+
+    # Настройка логирования
+    setup_logging()
+
+    # Запуск соответствующего режима
+    if args.mode == "test":
+        run_test_mode()
+    elif args.mode == "production":
+        run_production_mode()
