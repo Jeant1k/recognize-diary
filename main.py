@@ -2,6 +2,7 @@ import argparse
 import logging
 import itertools
 from pathlib import Path
+import re
 
 import config
 from src.utils.logging_setup import setup_logging
@@ -10,6 +11,16 @@ from src.ocr.rehand_mock_ocr import RehandMockOCR
 from src.llm.yandex_cloud_llm import YandexCloudLLM
 from src.document_generator.word import create_word_document
 
+
+def extract_number_from_path(path: Path) -> int:
+    """Извлекает первое число из имени файла для корректной сортировки."""
+    match = re.search(r'\d+', path.stem)
+    if match:
+        return int(match.group(0))
+    # Если число не найдено, возвращаем 0, чтобы файл оказался в начале
+    # и можно было увидеть проблему при отладке.
+    logging.warning(f"Не удалось найти номер страницы в имени файла: {path.name}. Сортировка может быть неверной.")
+    return 0
 
 def get_ocr_processor(tool_name: str):
     """Фабрика для создания OCR процессоров."""
@@ -28,7 +39,8 @@ def run_test_mode():
     """Запускает перебор всех комбинаций OCR, LLM и промптов на тестовых данных."""
     logging.info("--- Запуск в тестовом режиме ---")
     
-    test_scans = sorted(list(config.TEST_SCANS_DIR.glob('*.jpg')), key=lambda p: int(p.stem))
+    test_scans = sorted(list(config.TEST_SCANS_DIR.glob('*.jpg')), key=extract_number_from_path)
+
     if not test_scans:
         logging.warning("Тестовые сканы не найдены. Проверьте директорию data/test_scans/")
         return
@@ -98,7 +110,8 @@ def run_production_mode():
     """Запускает обработку всех сканов с заранее выбранной лучшей конфигурацией."""
     logging.info("--- Запуск в рабочем режиме ---")
     
-    prod_scans = sorted(list(config.PRODUCTION_SCANS_DIR.glob('*.jpg')), key=lambda p: int(p.stem))
+    prod_scans = sorted(list(config.PRODUCTION_SCANS_DIR.glob('*.jpg')), key=extract_number_from_path)
+
     if not prod_scans:
         logging.error("Рабочие сканы не найдены! Проверьте директорию data/production_scans/")
         return

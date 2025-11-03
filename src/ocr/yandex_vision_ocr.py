@@ -10,12 +10,14 @@ class YandexVisionOCR(BaseOCR):
 
     def __init__(self, processing_method: str = 'markdown'):
         self.url = "https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText"
-        self.api_key = config.YC_API_KEY
-        if not self.api_key:
-            raise ValueError("API-ключ Yandex не найден.")
+        
+        if not config.YC_API_KEY or not config.YC_FOLDER_ID:
+            raise ValueError("API-ключ (YC_API_KEY) и ID каталога (YC_FOLDER_ID) не найдены.")
+            
         self.headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Api-Key {self.api_key}"
+            "Authorization": f"Api-Key {config.YC_API_KEY}",
+            "x-folder-id": config.YC_FOLDER_ID,
         }
         self.processing_method = processing_method
 
@@ -35,24 +37,28 @@ class YandexVisionOCR(BaseOCR):
 
             result_text = ""
             prev_line_bottom = 0
+            if lines:
+                avg_line_height = sum(
+                    int(line['boundingBox']['vertices'][2]['y']) - int(line['boundingBox']['vertices'][0]['y']) 
+                    for line in lines
+                ) / len(lines)
+
             for i, line in enumerate(lines):
                 line_text = line['text']
                 top_y = int(line['boundingBox']['vertices'][0]['y'])
-                bottom_y = int(line['boundingBox']['vertices'][2]['y'])
-                line_height = bottom_y - top_y
-
+                
                 if i > 0:
                     gap = top_y - prev_line_bottom
-                    # Если вертикальный разрыв больше 80% высоты предыдущей строки, считаем это новым абзацем
-                    if gap > (line_height * 0.8):
+                    if gap > avg_line_height:
                         result_text += "\n\n"
                     else:
                         result_text += " "
                 
                 result_text += line_text
-                prev_line_bottom = bottom_y
+                prev_line_bottom = int(line['boundingBox']['vertices'][2]['y'])
             
             return result_text.strip()
+
         except (KeyError, IndexError) as e:
             logging.error(f"Ошибка при обработке Bbox: {e}")
             return response_data.get('result', {}).get('textAnnotation', {}).get('fullText', '')
@@ -72,23 +78,29 @@ class YandexVisionOCR(BaseOCR):
                 "content": encoded_image
             }
 
-            response = requests.post(self.url, headers=self.headers, data=json.dumps(body))
+            response = requests.post(self.url, headers=self.headers, json=body, timeout=180)
             response.raise_for_status()
             
             response_data = response.json()
 
             if 'error' in response_data:
-                logging.error(f"Ошибка от API Yandex Vision: {response_data['error']}")
+                logging.error(f"Ошибка от API Yandex Vision: {response_data['error']['message']}")
+                return ""
+            
+            if 'result' not in response_data:
+                logging.error(f"В ответе API Yandex Vision отсутствует ключ 'result'. Ответ: {response_data}")
                 return ""
 
             if self.processing_method == 'bbox':
                 return self._process_with_bbox(response_data)
             
-            # По умолчанию (метод 'simple') используем готовый markdown
-            return response_data.get('result', {}).get('textAnnotation', {}).get('markdown', '')
+            return response_data.get('result', {}).get('textAnnotation', {}).get('fullText', '')
 
+        except requests.exceptions.HTTPError as e:
+            logging.error(f"HTTP-ошибка при обращении к Yandex Vision: {e.response.status_code}. Ответ сервера: {e.response.text}")
         except requests.exceptions.RequestException as e:
             logging.error(f"Сетевая ошибка при обращении к Yandex Vision: {e}")
         except Exception as e:
-            logging.error(f"Непредвиденная ошибка в YandexVisionOCR: {e}")
+            logging.error(f"Непредвиденная ошибка в YandexVisionOCR: {e}", exc_info=True)
+
         return ""

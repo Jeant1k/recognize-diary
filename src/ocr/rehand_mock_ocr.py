@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from .base_ocr import BaseOCR
 import config
+import re
 
 class RehandMockOCR(BaseOCR):
     """Мок-реализация для rehand.ru, читающая текст из файла."""
@@ -14,8 +15,15 @@ class RehandMockOCR(BaseOCR):
     def recognize(self, image_path: str) -> str:
         logging.info(f"Имитация распознавания (rehand.ru) для файла {image_path}...")
         try:
-            image_name = Path(image_path).stem
-            mock_file_path = self.mock_dir / f"{image_name}.txt"
+            image_stem = Path(image_path).stem
+            match = re.search(r'\d+', image_stem)
+            if not match:
+                logging.error(f"Не удалось извлечь номер из имени файла скана: {image_path}")
+                return f"[ОШИБКА: Не удалось найти номер в {image_path}]"
+            
+            page_num = str(int(match.group(0))) # '0008' -> '8'
+            
+            mock_file_path = self.mock_dir / f"{page_num}.txt"
             
             if not mock_file_path.exists():
                 logging.error(f"Мок-файл не найден: {mock_file_path}")
