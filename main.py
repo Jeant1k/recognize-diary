@@ -1,25 +1,23 @@
 import argparse
 import logging
 import itertools
-from pathlib import Path
 import re
+from pathlib import Path
 
 import config
 from src.utils.logging_setup import setup_logging
 from src.ocr.yandex_vision_ocr import YandexVisionOCR
 from src.ocr.rehand_mock_ocr import RehandMockOCR
 from src.llm.yandex_cloud_llm import YandexCloudLLM
+from src.llm.openai_compatible_llm import OpenAICompatibleLLM # <-- Импортируем новый класс
 from src.document_generator.word import create_word_document
 
-
-def extract_number_from_path(path: Path) -> int:
-    """Извлекает первое число из имени файла для корректной сортировки."""
+def _extract_page_number(path: Path) -> int:
+    """Извлекает число из имени файла для корректной сортировки."""
     match = re.search(r'\d+', path.stem)
     if match:
         return int(match.group(0))
-    # Если число не найдено, возвращаем 0, чтобы файл оказался в начале
-    # и можно было увидеть проблему при отладке.
-    logging.warning(f"Не удалось найти номер страницы в имени файла: {path.name}. Сортировка может быть неверной.")
+    # Возвращаем 0 или другое значение по умолчанию, если число не найдено
     return 0
 
 def get_ocr_processor(tool_name: str):
@@ -35,19 +33,32 @@ def get_ocr_processor(tool_name: str):
     
     raise NotImplementedError(f"Тип OCR процессора не реализован: {tool_config['type']}")
 
+def get_llm_processor(llm_name: str):
+    """Фабрика для создания LLM процессоров на основе конфигурации."""
+    llm_config = config.LLM_MODELS.get(llm_name)
+    if not llm_config:
+        raise ValueError(f"Неизвестная модель LLM: {llm_name}")
+    
+    model_type = llm_config.get("type")
+    
+    if model_type == "yandex_sdk":
+        return YandexCloudLLM(model_uri=llm_config["uri"])
+    elif model_type == "openai_compatible":
+        return OpenAICompatibleLLM(model_uri=llm_config["uri"], base_url=llm_config["base_url"])
+    else:
+        raise NotImplementedError(f"Тип LLM процессора не реализован: {model_type}")
+
 def run_test_mode():
     """Запускает перебор всех комбинаций OCR, LLM и промптов на тестовых данных."""
     logging.info("--- Запуск в тестовом режиме ---")
     
-    test_scans = sorted(list(config.TEST_SCANS_DIR.glob('*.jpg')), key=extract_number_from_path)
-
+    test_scans = sorted(list(config.TEST_SCANS_DIR.glob('*.jpg')), key=_extract_page_number)
     if not test_scans:
         logging.warning("Тестовые сканы не найдены. Проверьте директорию data/test_scans/")
         return
 
     config.TEST_OUTPUTS_DIR.mkdir(exist_ok=True)
     
-    # Создаем все комбинации для перебора
     combinations = list(itertools.product(
         config.OCR_TOOLS.keys(),
         config.LLM_MODELS.keys(),
@@ -58,12 +69,10 @@ def run_test_mode():
     logging.info(f"Всего комбинаций для проверки: {len(combinations)}")
     
     for image_path in test_scans:
-        page_num = image_path.stem
-        logging.info(f"--- Обработка страницы {page_num} ---")
+        page_name = image_path.stem
+        logging.info(f"--- Обработка страницы {page_name} ---")
         
-        # Для чистоты эксперимента, если rehand есть в комбинациях,
-        # проверим наличие мок-файла заранее
-        rehand_text_path = config.REHAND_MOCK_TEXTS_DIR / f"{page_num}.txt"
+        rehand_text_path = config.REHAND_MOCK_TEXTS_DIR / f"{page_name}.txt"
         if "rehand_mock" in config.OCR_TOOLS and not rehand_text_path.exists():
              logging.warning(f"Мок-файл {rehand_text_path} не найден, комбинации с rehand_mock будут пропущены для этой страницы.")
              
@@ -79,21 +88,21 @@ def run_test_mode():
                 # 1. Распознавание текста (OCR)
                 ocr_processor = get_ocr_processor(ocr_name)
                 raw_text = ocr_processor.recognize(str(image_path))
-                if not raw_text or raw_text.startswith("[ОШИБКА"):
-                    logging.error(f"Не удалось распознать текст для {page_num}. Пропуск комбинации.")
+                if not raw_text or raw_text.strip().startswith("[ОШИБКА"):
+                    logging.error(f"Не удалось распознать текст для {page_name}. Пропуск комбинации.")
                     continue
 
                 # 2. Коррекция и форматирование (LLM)
-                llm_processor = YandexCloudLLM(model_uri=config.LLM_MODELS[llm_name])
+                llm_processor = get_llm_processor(llm_name) # <-- Используем новую фабрику
                 prompt_template = config.PROMPTS[prompt_name]
                 formatted_text = llm_processor.correct_and_format(raw_text, prompt_template)
                 
                 # 3. Сохранение результата
-                output_filename = f"page_{page_num}__{ocr_name}__{llm_name}__{prompt_name}.md"
+                output_filename = f"page_{page_name}__{ocr_name}__{llm_name}__{prompt_name}.md"
                 output_path = config.TEST_OUTPUTS_DIR / output_filename
                 
                 with open(output_path, 'w', encoding='utf-8') as f:
-                    f.write(f"# Результат для страницы {page_num}\n")
+                    f.write(f"# Результат для страницы {page_name}\n")
                     f.write(f"# Комбинация: {current_combination}\n\n")
                     f.write("--- СЫРОЙ ТЕКСТ OCR ---\n")
                     f.write(raw_text + "\n\n")
@@ -110,8 +119,7 @@ def run_production_mode():
     """Запускает обработку всех сканов с заранее выбранной лучшей конфигурацией."""
     logging.info("--- Запуск в рабочем режиме ---")
     
-    prod_scans = sorted(list(config.PRODUCTION_SCANS_DIR.glob('*.jpg')), key=extract_number_from_path)
-
+    prod_scans = sorted(list(config.PRODUCTION_SCANS_DIR.glob('*.jpg')), key=_extract_page_number)
     if not prod_scans:
         logging.error("Рабочие сканы не найдены! Проверьте директорию data/production_scans/")
         return
@@ -119,10 +127,9 @@ def run_production_mode():
     logging.info(f"Найдено {len(prod_scans)} страниц для обработки.")
     logging.info(f"Используемая конфигурация: OCR={config.PRODUCTION_OCR_TOOL}, LLM={config.PRODUCTION_LLM_MODEL}, Prompt={config.PRODUCTION_PROMPT}")
 
-    # Инициализируем процессоры один раз
     try:
         ocr_processor = get_ocr_processor(config.PRODUCTION_OCR_TOOL)
-        llm_processor = YandexCloudLLM(model_uri=config.LLM_MODELS[config.PRODUCTION_LLM_MODEL])
+        llm_processor = get_llm_processor(config.PRODUCTION_LLM_MODEL) # <-- Используем новую фабрику
         prompt_template = config.PROMPTS[config.PRODUCTION_PROMPT]
     except (ValueError, NotImplementedError) as e:
         logging.critical(f"Ошибка инициализации процессоров: {e}")
@@ -131,14 +138,14 @@ def run_production_mode():
     all_pages_markdown = []
     
     for i, image_path in enumerate(prod_scans):
-        page_num = image_path.stem
+        page_name = image_path.stem
         logging.info(f"Обработка страницы {i+1}/{len(prod_scans)} (файл: {image_path.name})...")
         
         try:
             raw_text = ocr_processor.recognize(str(image_path))
-            if not raw_text or raw_text.startswith("[ОШИБКА"):
-                logging.error(f"Не удалось распознать текст для {page_num}. Страница будет пропущена.")
-                all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_num}]")
+            if not raw_text or raw_text.strip().startswith("[ОШИБКА"):
+                logging.error(f"Не удалось распознать текст для {page_name}. Страница будет пропущена.")
+                all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_name}]")
                 continue
 
             formatted_text = llm_processor.correct_and_format(raw_text, prompt_template)
@@ -146,7 +153,7 @@ def run_production_mode():
             
         except Exception as e:
             logging.error(f"Критическая ошибка при обработке файла {image_path}: {e}", exc_info=True)
-            all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_num} из-за внутренней ошибки]")
+            all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_name} из-за внутренней ошибки]")
 
     # Собираем все в один Word файл
     output_docx_path = config.PRODUCTION_OUTPUT_DIR / "diary.docx"
@@ -156,7 +163,6 @@ def run_production_mode():
 
 
 if __name__ == "__main__":
-    # Настройка парсера аргументов командной строки
     parser = argparse.ArgumentParser(description="Оцифровка рукописного дневника.")
     parser.add_argument(
         "--mode",
@@ -167,10 +173,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Настройка логирования
     setup_logging()
 
-    # Запуск соответствующего режима
     if args.mode == "test":
         run_test_mode()
     elif args.mode == "production":

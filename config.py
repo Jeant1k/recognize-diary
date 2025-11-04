@@ -41,9 +41,20 @@ OCR_TOOLS = {
 
 # Определения LLM моделей (URI для Yandex Cloud)
 LLM_MODELS = {
-    "yandex_gpt_pro": f"gpt://{YC_FOLDER_ID}/yandexgpt/latest",
-    "qwen3_235b": f"gpt://{YC_FOLDER_ID}/qwen3-235b-a22b-fp8/latest",
-    "gpt_oss_120b": f"gpt://{YC_FOLDER_ID}/gpt-oss-120b/latest",
+    "yandex_gpt_pro": {
+        "type": "yandex_sdk",
+        "uri": f"gpt://{YC_FOLDER_ID}/yandexgpt/latest",
+    },
+    "qwen3_235b": {
+        "type": "openai_compatible",
+        "uri": f"gpt://{YC_FOLDER_ID}/qwen3-235b-a22b-fp8/latest",
+        "base_url": "https://llm.api.cloud.yandex.net/foundation_models/v1",
+    },
+    "gpt_oss_120b": {
+        "type": "openai_compatible",
+        "uri": f"gpt://{YC_FOLDER_ID}/gpt-oss-120b/latest",
+        "base_url": "https://llm.api.cloud.yandex.net/foundation_models/v1",
+    },
 }
 
 # Шаблоны промптов (вставьте сюда свои варианты)

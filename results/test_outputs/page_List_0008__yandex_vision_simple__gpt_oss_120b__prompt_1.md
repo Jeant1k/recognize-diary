@@ -49,11 +49,5 @@
 
 
 --- ОБРАБОТАННЫЙ ТЕКСТ LLM ---
-[ОШИБКА LLM: <AioRpcError of RPC that terminated with:
-	code = StatusCode.INTERNAL
-	details = "Fatal internal error in TextGenerationService.Completion"
-	debug_error_string = "UNKNOWN:Error received from peer ipv4:158.160.54.160:443 {grpc_message:"Fatal internal error in TextGenerationService.Completion", grpc_status:13}"
-	endpoint = "llm.api.cloud.yandex.net:443"
-	stub_class = TextGenerationServiceStub
-	x-client-request-id = "126498f2-a39b-43a6-acee-b059b3a8a8ae"
->]
+[ОШИБКА LLM/API: request-id: 065d6c0a-efd3-40ac-ac8b-78266f3593ae
+trace-id: -]

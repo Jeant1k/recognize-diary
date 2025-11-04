@@ -49,11 +49,5 @@
 
 
 --- ОБРАБОТАННЫЙ ТЕКСТ LLM ---
-[ОШИБКА LLM: <AioRpcError of RPC that terminated with:
-	code = StatusCode.INTERNAL
-	details = "Internal Server Error"
-	debug_error_string = "UNKNOWN:Error received from peer ipv4:158.160.54.160:443 {grpc_message:"Internal Server Error", grpc_status:13}"
-	endpoint = "llm.api.cloud.yandex.net:443"
-	stub_class = TextGenerationServiceStub
-	x-client-request-id = "d60c7352-bd1c-479c-adc3-e6372fc0c404"
->]
+[ОШИБКА LLM/API: request-id: 603ab43c-0d78-4c9a-8005-9ead225aca40
+trace-id: -]
