@@ -34,8 +34,8 @@ if not YC_API_KEY or not YC_FOLDER_ID:
 
 # Определения OCR инструментов
 OCR_TOOLS = {
-    # "yandex_vision_simple": {"type": "yandex", "method": "markdown"},
-    # "yandex_vision_bbox": {"type": "yandex", "method": "bbox"},
+    "yandex_vision_simple": {"type": "yandex", "method": "markdown"},
+    "yandex_vision_bbox": {"type": "yandex", "method": "bbox"},
     "rehand_mock": {"type": "rehand_mock"}
 }
 

@@ -1,6 +1,7 @@
 import docx
 import logging
 from pathlib import Path
+import re
 
 def create_word_document(pages_data: list[tuple[int, str]], output_path: str | Path):
     """
@@ -12,13 +13,14 @@ def create_word_document(pages_data: list[tuple[int, str]], output_path: str | P
     doc.add_heading('Дневник', level=0)
 
     for i, (page_num, page_text) in enumerate(pages_data):
-        # Добавляем разделитель страниц, кроме как перед первой страницей
         if i > 0:
             doc.add_page_break()
         
-        doc.add_heading(f'Страница {page_num}', level=1) # Используем реальный номер страницы
+        doc.add_heading(f'Страница {page_num}', level=1)
 
-        paragraphs = page_text.strip().split('\n\n')
+        cleaned_text = re.sub(r'```(?:markdown)?\s*(.*?)\s*```', r'\1', page_text, flags=re.DOTALL).strip()
+
+        paragraphs = cleaned_text.split('\n\n')
         for para in paragraphs:
             para = para.strip()
             if not para:
