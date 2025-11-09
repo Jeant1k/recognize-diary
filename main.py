@@ -129,35 +129,36 @@ def run_production_mode():
 
     try:
         ocr_processor = get_ocr_processor(config.PRODUCTION_OCR_TOOL)
-        llm_processor = get_llm_processor(config.PRODUCTION_LLM_MODEL) # <-- Используем новую фабрику
+        llm_processor = get_llm_processor(config.PRODUCTION_LLM_MODEL)
         prompt_template = config.PROMPTS[config.PRODUCTION_PROMPT]
     except (ValueError, NotImplementedError) as e:
         logging.critical(f"Ошибка инициализации процессоров: {e}")
         return
 
-    all_pages_markdown = []
+    all_pages_data = []
     
     for i, image_path in enumerate(prod_scans):
         page_name = image_path.stem
+        page_num = _extract_page_number(image_path)
         logging.info(f"Обработка страницы {i+1}/{len(prod_scans)} (файл: {image_path.name})...")
         
         try:
             raw_text = ocr_processor.recognize(str(image_path))
             if not raw_text or raw_text.strip().startswith("[ОШИБКА"):
                 logging.error(f"Не удалось распознать текст для {page_name}. Страница будет пропущена.")
-                all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_name}]")
+                all_pages_data.append((page_num, f"#[ОШИБКА: Не удалось обработать страницу {page_name}]"))
                 continue
 
             formatted_text = llm_processor.correct_and_format(raw_text, prompt_template)
-            all_pages_markdown.append(formatted_text)
+            all_pages_data.append((page_num, formatted_text))
             
         except Exception as e:
             logging.error(f"Критическая ошибка при обработке файла {image_path}: {e}", exc_info=True)
-            all_pages_markdown.append(f"#[ОШИБКА: Не удалось обработать страницу {page_name} из-за внутренней ошибки]")
+            all_pages_data.append((page_num, f"#[ОШИБКА: Не удалось обработать страницу {page_name} из-за внутренней ошибки]"))
 
     # Собираем все в один Word файл
     output_docx_path = config.PRODUCTION_OUTPUT_DIR / "diary.docx"
-    create_word_document(all_pages_markdown, output_docx_path)
+    create_word_document(all_pages_data, output_docx_path)
     
     logging.info("--- Работа завершена ---")
 

@@ -34,8 +34,8 @@ if not YC_API_KEY or not YC_FOLDER_ID:
 
 # Определения OCR инструментов
 OCR_TOOLS = {
-    "yandex_vision_simple": {"type": "yandex", "method": "markdown"},
-    "yandex_vision_bbox": {"type": "yandex", "method": "bbox"},
+    # "yandex_vision_simple": {"type": "yandex", "method": "markdown"},
+    # "yandex_vision_bbox": {"type": "yandex", "method": "bbox"},
     "rehand_mock": {"type": "rehand_mock"}
 }
 
@@ -48,12 +48,12 @@ LLM_MODELS = {
     "qwen3_235b": {
         "type": "openai_compatible",
         "uri": f"gpt://{YC_FOLDER_ID}/qwen3-235b-a22b-fp8/latest",
-        "base_url": "https://llm.api.cloud.yandex.net/foundation_models/v1",
+        "base_url": "https://llm.api.cloud.yandex.net/v1",
     },
     "gpt_oss_120b": {
         "type": "openai_compatible",
         "uri": f"gpt://{YC_FOLDER_ID}/gpt-oss-120b/latest",
-        "base_url": "https://llm.api.cloud.yandex.net/foundation_models/v1",
+        "base_url": "https://llm.api.cloud.yandex.net/v1",
     },
 }
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 def create_word_document(pages_data: list[tuple[int, str]], output_path: str | Path):
     """
-    Создает Word документ из списка текстов в формате Markdown.
+    Создает Word документ из списка кортежей (номер_страницы, текст_в_markdown).
     Каждый элемент списка будет отделен в документе.
     """
     logging.info(f"Создание Word документа: {output_path}")

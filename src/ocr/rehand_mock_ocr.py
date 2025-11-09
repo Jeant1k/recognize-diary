@@ -16,14 +16,8 @@ class RehandMockOCR(BaseOCR):
         logging.info(f"Имитация распознавания (rehand.ru) для файла {image_path}...")
         try:
             image_stem = Path(image_path).stem
-            match = re.search(r'\d+', image_stem)
-            if not match:
-                logging.error(f"Не удалось извлечь номер из имени файла скана: {image_path}")
-                return f"[ОШИБКА: Не удалось найти номер в {image_path}]"
             
-            page_num = str(int(match.group(0))) # '0008' -> '8'
-            
-            mock_file_path = self.mock_dir / f"{page_num}.txt"
+            mock_file_path = self.mock_dir / f"{image_stem}.txt"
             
             if not mock_file_path.exists():
                 logging.error(f"Мок-файл не найден: {mock_file_path}")

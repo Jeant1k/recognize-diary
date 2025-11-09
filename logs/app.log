@@ -1,61 +1,105 @@
-2025-11-03 18:32:30,751 [INFO] - Логирование настроено.
-2025-11-03 18:32:30,751 [INFO] - --- Запуск в тестовом режиме ---
-2025-11-03 18:32:30,752 [INFO] - Всего сканов для теста: 1
-2025-11-03 18:32:30,752 [INFO] - Всего комбинаций для проверки: 45
-2025-11-03 18:32:30,752 [INFO] - --- Обработка страницы List_0008 ---
-2025-11-03 18:32:30,752 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: yandex_gpt_pro, Prompt: prompt_1
-2025-11-03 18:32:30,752 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:31,681 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
-2025-11-03 18:32:31,681 [INFO] - Отправка текста в LLM для коррекции...
-2025-11-03 18:32:36,299 [INFO] - Текст успешно обработан LLM.
-2025-11-03 18:32:36,299 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__yandex_gpt_pro__prompt_1.md
-2025-11-03 18:32:36,299 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: yandex_gpt_pro, Prompt: prompt_2
-2025-11-03 18:32:36,300 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:37,172 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
-2025-11-03 18:32:37,173 [INFO] - Отправка текста в LLM для коррекции...
-2025-11-03 18:32:40,684 [INFO] - Текст успешно обработан LLM.
-2025-11-03 18:32:40,685 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__yandex_gpt_pro__prompt_2.md
-2025-11-03 18:32:40,685 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: yandex_gpt_pro, Prompt: prompt_3
-2025-11-03 18:32:40,685 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:41,537 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
-2025-11-03 18:32:41,537 [INFO] - Отправка текста в LLM для коррекции...
-2025-11-03 18:32:45,380 [INFO] - Текст успешно обработан LLM.
-2025-11-03 18:32:45,381 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__yandex_gpt_pro__prompt_3.md
-2025-11-03 18:32:45,381 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: yandex_gpt_pro, Prompt: prompt_4
-2025-11-03 18:32:45,381 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:46,216 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
-2025-11-03 18:32:46,216 [INFO] - Отправка текста в LLM для коррекции...
-2025-11-03 18:32:49,718 [INFO] - Текст успешно обработан LLM.
-2025-11-03 18:32:49,718 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__yandex_gpt_pro__prompt_4.md
-2025-11-03 18:32:49,718 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: yandex_gpt_pro, Prompt: prompt_5
-2025-11-03 18:32:49,718 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:50,583 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
-2025-11-03 18:32:50,583 [INFO] - Отправка текста в LLM для коррекции...
-2025-11-03 18:32:54,266 [INFO] - Текст успешно обработан LLM.
-2025-11-03 18:32:54,268 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__yandex_gpt_pro__prompt_5.md
-2025-11-03 18:32:54,268 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: qwen3_235b, Prompt: prompt_1
-2025-11-03 18:32:54,268 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:55,596 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
-2025-11-03 18:32:55,596 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
-2025-11-03 18:32:55,828 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/foundation_models/v1/chat/completions "HTTP/1.1 404 Not Found"
-2025-11-03 18:32:55,828 [ERROR] - Ошибка API при работе с OpenAI-совместимой моделью: request-id: 47b11cf9-78fd-4a65-aa1d-70bd0efdbe7c
-trace-id: -
-2025-11-03 18:32:55,829 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__qwen3_235b__prompt_1.md
-2025-11-03 18:32:55,829 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: qwen3_235b, Prompt: prompt_2
-2025-11-03 18:32:55,829 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:56,704 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
-2025-11-03 18:32:56,704 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
-2025-11-03 18:32:56,728 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/foundation_models/v1/chat/completions "HTTP/1.1 404 Not Found"
-2025-11-03 18:32:56,729 [ERROR] - Ошибка API при работе с OpenAI-совместимой моделью: request-id: 97cc5afb-558c-4845-b0f4-a441861b07fb
-trace-id: -
-2025-11-03 18:32:56,729 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__qwen3_235b__prompt_2.md
-2025-11-03 18:32:56,730 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: qwen3_235b, Prompt: prompt_3
-2025-11-03 18:32:56,730 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
-2025-11-03 18:32:57,588 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
-2025-11-03 18:32:57,588 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
-2025-11-03 18:32:57,609 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/foundation_models/v1/chat/completions "HTTP/1.1 404 Not Found"
-2025-11-03 18:32:57,610 [ERROR] - Ошибка API при работе с OpenAI-совместимой моделью: request-id: 603ab43c-0d78-4c9a-8005-9ead225aca40
-trace-id: -
-2025-11-03 18:32:57,610 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__yandex_vision_simple__qwen3_235b__prompt_3.md
-2025-11-03 18:32:57,610 [INFO] - Тестирование комбинации: OCR: yandex_vision_simple, LLM: qwen3_235b, Prompt: prompt_4
-2025-11-03 18:32:57,610 [INFO] - Распознавание файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg с помощью Yandex Vision (метод: markdown)...
+2025-11-09 15:27:12,048 [INFO] - Логирование настроено.
+2025-11-09 15:27:12,048 [INFO] - --- Запуск в тестовом режиме ---
+2025-11-09 15:27:12,048 [INFO] - Всего сканов для теста: 1
+2025-11-09 15:27:12,048 [INFO] - Всего комбинаций для проверки: 15
+2025-11-09 15:27:12,049 [INFO] - --- Обработка страницы List_0008 ---
+2025-11-09 15:27:12,049 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: yandex_gpt_pro, Prompt: prompt_1
+2025-11-09 15:27:12,049 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:12,049 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
+2025-11-09 15:27:12,050 [INFO] - Отправка текста в LLM для коррекции...
+2025-11-09 15:27:15,820 [INFO] - Текст успешно обработан LLM.
+2025-11-09 15:27:15,820 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__yandex_gpt_pro__prompt_1.md
+2025-11-09 15:27:15,820 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: yandex_gpt_pro, Prompt: prompt_2
+2025-11-09 15:27:15,820 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:15,821 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
+2025-11-09 15:27:15,821 [INFO] - Отправка текста в LLM для коррекции...
+2025-11-09 15:27:19,448 [INFO] - Текст успешно обработан LLM.
+2025-11-09 15:27:19,449 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__yandex_gpt_pro__prompt_2.md
+2025-11-09 15:27:19,449 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: yandex_gpt_pro, Prompt: prompt_3
+2025-11-09 15:27:19,449 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:19,450 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
+2025-11-09 15:27:19,450 [INFO] - Отправка текста в LLM для коррекции...
+2025-11-09 15:27:23,003 [INFO] - Текст успешно обработан LLM.
+2025-11-09 15:27:23,004 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__yandex_gpt_pro__prompt_3.md
+2025-11-09 15:27:23,004 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: yandex_gpt_pro, Prompt: prompt_4
+2025-11-09 15:27:23,004 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:23,004 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
+2025-11-09 15:27:23,004 [INFO] - Отправка текста в LLM для коррекции...
+2025-11-09 15:27:26,458 [INFO] - Текст успешно обработан LLM.
+2025-11-09 15:27:26,458 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__yandex_gpt_pro__prompt_4.md
+2025-11-09 15:27:26,458 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: yandex_gpt_pro, Prompt: prompt_5
+2025-11-09 15:27:26,458 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:26,459 [INFO] - Инициализирована модель LLM: gpt://b1glub0g18no5qoqc5hf/yandexgpt/latest
+2025-11-09 15:27:26,459 [INFO] - Отправка текста в LLM для коррекции...
+2025-11-09 15:27:30,171 [INFO] - Текст успешно обработан LLM.
+2025-11-09 15:27:30,172 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__yandex_gpt_pro__prompt_5.md
+2025-11-09 15:27:30,172 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: qwen3_235b, Prompt: prompt_1
+2025-11-09 15:27:30,172 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:30,222 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
+2025-11-09 15:27:30,222 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:27:45,514 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:27:45,521 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:27:45,522 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__qwen3_235b__prompt_1.md
+2025-11-09 15:27:45,522 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: qwen3_235b, Prompt: prompt_2
+2025-11-09 15:27:45,522 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:45,550 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
+2025-11-09 15:27:45,550 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:27:56,830 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:27:56,831 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:27:56,831 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__qwen3_235b__prompt_2.md
+2025-11-09 15:27:56,831 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: qwen3_235b, Prompt: prompt_3
+2025-11-09 15:27:56,831 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:27:56,859 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
+2025-11-09 15:27:56,860 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:28:07,468 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:28:07,469 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:28:07,469 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__qwen3_235b__prompt_3.md
+2025-11-09 15:28:07,470 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: qwen3_235b, Prompt: prompt_4
+2025-11-09 15:28:07,470 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:28:07,497 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
+2025-11-09 15:28:07,497 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:28:18,170 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:28:18,170 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:28:18,171 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__qwen3_235b__prompt_4.md
+2025-11-09 15:28:18,171 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: qwen3_235b, Prompt: prompt_5
+2025-11-09 15:28:18,171 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:28:18,199 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/qwen3-235b-a22b-fp8/latest
+2025-11-09 15:28:18,200 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:28:30,685 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:28:30,686 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:28:30,686 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__qwen3_235b__prompt_5.md
+2025-11-09 15:28:30,686 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: gpt_oss_120b, Prompt: prompt_1
+2025-11-09 15:28:30,686 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:28:30,714 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/gpt-oss-120b/latest
+2025-11-09 15:28:30,714 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:28:46,686 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:28:47,683 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:28:47,683 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__gpt_oss_120b__prompt_1.md
+2025-11-09 15:28:47,683 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: gpt_oss_120b, Prompt: prompt_2
+2025-11-09 15:28:47,683 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:28:47,712 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/gpt-oss-120b/latest
+2025-11-09 15:28:47,712 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:28:55,237 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:28:56,238 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:28:56,239 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__gpt_oss_120b__prompt_2.md
+2025-11-09 15:28:56,239 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: gpt_oss_120b, Prompt: prompt_3
+2025-11-09 15:28:56,239 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:28:56,266 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/gpt-oss-120b/latest
+2025-11-09 15:28:56,266 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:29:04,312 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:29:05,314 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:29:05,314 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__gpt_oss_120b__prompt_3.md
+2025-11-09 15:29:05,314 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: gpt_oss_120b, Prompt: prompt_4
+2025-11-09 15:29:05,314 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:29:05,342 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/gpt-oss-120b/latest
+2025-11-09 15:29:05,343 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:29:15,366 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:29:16,366 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:29:16,367 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__gpt_oss_120b__prompt_4.md
+2025-11-09 15:29:16,367 [INFO] - Тестирование комбинации: OCR: rehand_mock, LLM: gpt_oss_120b, Prompt: prompt_5
+2025-11-09 15:29:16,367 [INFO] - Имитация распознавания (rehand.ru) для файла /home/musicorumamateur3/recognize-diary/data/test_scans/List_0008.jpg...
+2025-11-09 15:29:16,395 [INFO] - Инициализирован OpenAI-совместимый клиент для модели: gpt://b1glub0g18no5qoqc5hf/gpt-oss-120b/latest
+2025-11-09 15:29:16,395 [INFO] - Отправка текста в LLM (OpenAI-совместимый) для коррекции...
+2025-11-09 15:29:30,777 [INFO] - HTTP Request: POST https://llm.api.cloud.yandex.net/v1/chat/completions "HTTP/1.1 200 OK"
+2025-11-09 15:29:31,772 [INFO] - Текст успешно обработан LLM (OpenAI-совместимый).
+2025-11-09 15:29:31,772 [INFO] - Результат сохранен в /home/musicorumamateur3/recognize-diary/results/test_outputs/page_List_0008__rehand_mock__gpt_oss_120b__prompt_5.md
